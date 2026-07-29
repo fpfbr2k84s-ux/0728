@@ -438,7 +438,7 @@
   </div>
 
   <script>
-    const DRAW_ENDPOINT = '/.netlify/functions/draw';
+    const DRAW_ENDPOINT = '/api/draw';
 
     const chatLog = document.getElementById('chatLog');
     const birthDate = document.getElementById('birthDate');
@@ -633,7 +633,7 @@
           body: JSON.stringify({ birthDate: dateValue })
         });
       } catch (error) {
-        return buildLocalRecommendation(parseBirthDate(dateValue));
+        throw new Error('서버에 연결할 수 없습니다. Vercel 배포 주소에서 열고 있는지 확인해 주세요.');
       }
 
       const raw = await response.text();
@@ -647,7 +647,7 @@
       }
 
       if (!response.ok) {
-        return buildLocalRecommendation(parseBirthDate(dateValue));
+        throw new Error(data.error || '서버에서 추천 결과를 받지 못했습니다.');
       }
 
       return data;
@@ -669,7 +669,7 @@
         typing.remove();
 
         signValue.textContent = data.sign.name;
-        countValue.textContent = `${data.numbers.length}개`;
+        countValue.textContent = String(data.numbers.length) + " numbers";
         setNumbers(data.numbers);
         setReasons(data.numbers);
         assistantReply.textContent = data.message;
