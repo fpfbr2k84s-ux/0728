@@ -481,6 +481,12 @@
 
     birthDate.max = new Date().toISOString().slice(0, 10);
 
+    function trackEvent(eventName, params = {}) {
+      if (typeof window.gtag === 'function') {
+        window.gtag('event', eventName, params);
+      }
+    }
+
     function addMessage(role, text) {
       const row = document.createElement('div');
       row.className = `message ${role}`;
@@ -753,6 +759,10 @@
       }
 
       addMessage('user', formatBirthDate(dateValue));
+      trackEvent('lotto_submit', {
+        method: 'manual',
+        birth_date: dateValue
+      });
       sendBtn.disabled = true;
       const typing = addMessage('bot', '생각하는 중...');
 
@@ -765,12 +775,22 @@
         setNumbers(data.numbers);
         setReasons(data.numbers);
         assistantReply.textContent = data.message;
+        trackEvent('lotto_result_saved', {
+          birth_date: data.birthDate || dateValue,
+          zodiac_sign: data.sign.name,
+          numbers_count: data.numbers.length,
+          saved: data.saved === true
+        });
 
         addMessage('bot', data.message);
       } catch (error) {
         typing.remove();
         const message = error?.message || '추천 결과를 불러오지 못했어요.';
         assistantReply.textContent = message;
+        trackEvent('lotto_result_error', {
+          birth_date: dateValue,
+          error_message: message
+        });
         addMessage('bot', message);
       } finally {
         sendBtn.disabled = false;
@@ -787,6 +807,9 @@
     document.querySelectorAll('.chip').forEach((chip) => {
       chip.addEventListener('click', () => {
         birthDate.value = chip.dataset.date;
+        trackEvent('lotto_preset_selected', {
+          preset_date: chip.dataset.date
+        });
       });
     });
 
