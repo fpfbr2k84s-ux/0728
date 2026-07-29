@@ -1,4 +1,4 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="ko">
 <head>
   <meta charset="utf-8" />
@@ -341,6 +341,133 @@
       line-height: 1.5;
     }
 
+    .card-settings {
+      display: grid;
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    .card-settings label {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--ink);
+    }
+
+    .card-settings input {
+      width: 100%;
+      height: 46px;
+      padding: 0 12px;
+      border: 1px solid var(--hairline);
+      border-radius: 12px;
+      font: inherit;
+      background: #fff;
+    }
+
+    .card-settings input:focus {
+      border-color: var(--ink);
+      box-shadow: 0 0 0 1px var(--ink);
+      outline: none;
+    }
+
+    .card-actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .btn-secondary {
+      background: #fff;
+      color: var(--ink);
+      border: 1px solid var(--hairline);
+    }
+
+    .btn-secondary:hover {
+      border-color: var(--ink);
+    }
+
+    .art-card {
+      position: relative;
+      aspect-ratio: 3 / 4;
+      border-radius: 20px;
+      overflow: hidden;
+      background:
+        radial-gradient(circle at 50% 60%, rgba(152, 64, 255, 0.4), rgba(10, 8, 44, 0.95) 45%, #060512 100%);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      box-shadow: rgba(0, 0, 0, 0.18) 0 22px 60px;
+    }
+
+    .art-image {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      opacity: 0.96;
+      display: block;
+    }
+
+    .art-overlay {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 16px;
+      color: #fff;
+      background:
+        linear-gradient(to top, rgba(4, 3, 15, 0.86), rgba(4, 3, 15, 0.16) 40%, rgba(4, 3, 15, 0.36) 100%);
+    }
+
+    .art-top,
+    .art-bottom {
+      display: grid;
+      gap: 8px;
+    }
+
+    .art-kicker {
+      font-size: 11px;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: rgba(255, 255, 255, 0.76);
+    }
+
+    .art-title {
+      font-size: 26px;
+      line-height: 1.05;
+      font-weight: 700;
+      max-width: 10ch;
+      text-shadow: 0 2px 10px rgba(0, 0, 0, 0.45);
+    }
+
+    .art-meta {
+      font-size: 13px;
+      line-height: 1.55;
+      color: rgba(255, 255, 255, 0.88);
+    }
+
+    .art-pills {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .art-pill {
+      display: inline-flex;
+      align-items: center;
+      border: 1px solid rgba(255, 255, 255, 0.22);
+      border-radius: 999px;
+      padding: 6px 10px;
+      font-size: 12px;
+      background: rgba(255, 255, 255, 0.08);
+      backdrop-filter: blur(6px);
+    }
+
+    .art-status {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
     @media (max-width: 960px) {
       .layout { grid-template-columns: 1fr; }
       .chat { min-height: 0; }
@@ -439,6 +566,37 @@
               <div class="label">챗봇 설명</div>
               <div class="note" id="assistantReply">생년월일을 입력하면 여기에서 설명이 나옵니다.</div>
             </div>
+
+            <div class="summary-card">
+              <div class="label">별자리 카드</div>
+              <div class="art-card" aria-live="polite">
+                <img id="cardImage" class="art-image" alt="" hidden />
+                <div class="art-overlay">
+                  <div class="art-top">
+                    <div class="art-kicker" id="cardKicker">AI Zodiac Card</div>
+                    <div class="art-title" id="cardTitle">카드 생성 대기 중</div>
+                  </div>
+                  <div class="art-bottom">
+                    <div class="art-meta" id="cardMeta">번호 추첨을 하면 별자리 분위기의 카드 이미지를 자동으로 만듭니다.</div>
+                    <div class="art-pills" id="cardPills"></div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="card-settings">
+                <label for="apiBaseInput">Vercel API Base URL</label>
+                <input id="apiBaseInput" type="url" placeholder="https://your-app.vercel.app" autocomplete="off" />
+                <label for="apiKeyInput">Soul 2 API Key</label>
+                <input id="apiKeyInput" type="password" placeholder="SG_..." autocomplete="off" />
+                <label for="apiSecretInput">Soul 2 Secret Key</label>
+                <input id="apiSecretInput" type="password" placeholder="SECRET_..." autocomplete="off" />
+                <div class="card-actions">
+                  <button class="btn btn-secondary" id="saveApiKeyBtn" type="button">설정 저장</button>
+                  <button class="btn btn-secondary" id="generateCardBtn" type="button">카드 다시 생성</button>
+                </div>
+                <div class="art-status" id="cardStatus">Vercel API Base URL, API Key, Secret Key를 입력하면 카드 생성을 시도합니다.</div>
+              </div>
+            </div>
           </div>
         </aside>
       </section>
@@ -448,10 +606,12 @@
   <script>
     // Configure these if you open the file directly or deploy the page somewhere else.
     // window.__DRAW_ENDPOINT__ = 'https://YOUR_DEPLOYMENT.vercel.app/api/draw';
+    // window.__CARD_ENDPOINT__ = 'https://YOUR_DEPLOYMENT.vercel.app/api/card';
     // window.__SUPABASE_URL__ = 'https://YOUR_PROJECT.supabase.co';
     // window.__SUPABASE_ANON_KEY__ = 'YOUR_SUPABASE_ANON_KEY';
     const APP_CONFIG = {
       drawEndpoint: window.__DRAW_ENDPOINT__ || '/api/draw',
+      cardEndpoint: window.__CARD_ENDPOINT__ || '/api/card',
       supabaseUrl: window.__SUPABASE_URL__ || '',
       supabaseAnonKey: window.__SUPABASE_ANON_KEY__ || ''
     };
@@ -464,6 +624,21 @@
     const assistantReply = document.getElementById('assistantReply');
     const signValue = document.getElementById('signValue');
     const countValue = document.getElementById('countValue');
+    const cardImage = document.getElementById('cardImage');
+    const cardKicker = document.getElementById('cardKicker');
+    const cardTitle = document.getElementById('cardTitle');
+    const cardMeta = document.getElementById('cardMeta');
+    const cardPills = document.getElementById('cardPills');
+    const cardStatus = document.getElementById('cardStatus');
+    const apiBaseInput = document.getElementById('apiBaseInput');
+    const apiKeyInput = document.getElementById('apiKeyInput');
+    const apiSecretInput = document.getElementById('apiSecretInput');
+    const saveApiKeyBtn = document.getElementById('saveApiKeyBtn');
+    const generateCardBtn = document.getElementById('generateCardBtn');
+    const API_BASE_STORAGE = 'app_api_base_url';
+    const HIGGSFIELD_KEY_STORAGE = 'higgsfield_api_key';
+    const HIGGSFIELD_SECRET_STORAGE = 'higgsfield_api_secret';
+    let lastRecommendationData = null;
     const zodiacSigns = [
       { name: '염소자리', start: [12, 22], end: [1, 19], element: '흙', traits: '신중함, 책임감, 꾸준함', lucky: [2, 8, 10, 17, 26, 35] },
       { name: '물병자리', start: [1, 20], end: [2, 18], element: '공기', traits: '독창성, 유연함, 실험정신', lucky: [4, 7, 11, 22, 31, 40] },
@@ -484,6 +659,146 @@
     function trackEvent(eventName, params = {}) {
       if (typeof window.gtag === 'function') {
         window.gtag('event', eventName, params);
+      }
+    }
+
+    function normalizeBaseUrl(value) {
+      return String(value || '').trim().replace(/\/$/, '');
+    }
+
+    function buildApiUrl(path) {
+      const explicitEndpoint = path === '/api/card'
+        ? window.__CARD_ENDPOINT__
+        : window.__DRAW_ENDPOINT__;
+      if (typeof explicitEndpoint === 'string' && explicitEndpoint.trim()) {
+        return explicitEndpoint.trim();
+      }
+
+      const explicitBase = normalizeBaseUrl(apiBaseInput.value || localStorage.getItem(API_BASE_STORAGE) || '');
+      if (explicitBase) {
+        return `${explicitBase}${path}`;
+      }
+
+      if (window.location && window.location.origin && window.location.origin !== 'null') {
+        return `${window.location.origin}${path}`;
+      }
+
+      return path;
+    }
+
+    function getStoredCardCredentials() {
+      return {
+        apiKey: apiKeyInput.value.trim() || localStorage.getItem(HIGGSFIELD_KEY_STORAGE) || '',
+        apiSecret: apiSecretInput.value.trim() || localStorage.getItem(HIGGSFIELD_SECRET_STORAGE) || ''
+      };
+    }
+
+    function setCardStatus(text) {
+      cardStatus.textContent = text;
+    }
+
+    function clearCardPreview(message) {
+      cardImage.hidden = true;
+      cardImage.removeAttribute('src');
+      cardTitle.textContent = '카드 생성 대기 중';
+      cardMeta.textContent = message || '번호 추첨을 하면 별자리 분위기의 카드 이미지를 자동으로 만듭니다.';
+      cardPills.innerHTML = '';
+      cardKicker.textContent = 'AI Zodiac Card';
+    }
+
+    function setCardPreview({ imageUrl, title, meta, pills }) {
+      if (imageUrl) {
+        cardImage.src = imageUrl;
+        cardImage.hidden = false;
+      }
+
+      cardTitle.textContent = title;
+      cardMeta.textContent = meta;
+      cardPills.innerHTML = '';
+      pills.forEach((pill) => {
+        const el = document.createElement('span');
+        el.className = 'art-pill';
+        el.textContent = pill;
+        cardPills.appendChild(el);
+      });
+    }
+
+    function buildCardPrompt(data) {
+      const numbers = data.numbers.map((item) => item.value).join(', ');
+      return [
+        'A dreamy vertical zodiac card illustration, editorial and cinematic.',
+        'Deep indigo night sky full of stars, fine constellation line art, and a glowing purple horizon.',
+        'Silhouettes of tall pine trees framing the scene from the sides and bottom.',
+        'Atmospheric, mystical, elegant, and premium, like a collectible astrology poster.',
+        'No readable text, no watermark, no logo, no people.',
+        `Zodiac sign mood: ${data.sign.name}. Element: ${data.sign.element}. Traits: ${data.sign.traits}.`,
+        `Lucky numbers to inspire subtle glowing clusters: ${numbers}.`
+      ].join(' ');
+    }
+
+    async function generateCardImage(data) {
+      const { apiKey, apiSecret } = getStoredCardCredentials();
+      if (!apiKey || !apiSecret) {
+        setCardStatus('API 키와 Secret 키를 모두 입력한 뒤 다시 시도해 주세요.');
+        clearCardPreview('인증 정보가 부족해서 카드 생성을 건너뛰었습니다.');
+        return null;
+      }
+
+      generateCardBtn.disabled = true;
+      setCardStatus('별자리 카드 이미지를 생성하는 중...');
+
+      try {
+        const response = await fetch(buildApiUrl('/api/card'), {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            apiKey,
+            apiSecret,
+            birthDate: data.birthDate,
+            sign: data.sign,
+            numbers: data.numbers,
+            prompt: buildCardPrompt(data)
+          })
+        });
+
+        const contentType = response.headers.get('content-type') || '';
+        const raw = contentType.includes('application/json') ? await response.json() : await response.text();
+
+        if (!response.ok) {
+          throw new Error(raw?.error || raw?.message || '카드 이미지 생성에 실패했습니다.');
+        }
+
+        let imageUrl = '';
+        if (raw && typeof raw === 'object') {
+          imageUrl = raw.imageUrl || raw.url || raw.output || raw.result || '';
+          if (!imageUrl && raw.base64Image) {
+            imageUrl = `data:${raw.mimeType || 'image/png'};base64,${raw.base64Image}`;
+          }
+        } else if (typeof raw === 'string' && raw.startsWith('data:')) {
+          imageUrl = raw;
+        }
+
+        if (!imageUrl) {
+          throw new Error('카드 이미지 응답을 해석하지 못했습니다.');
+        }
+
+        setCardPreview({
+          imageUrl,
+          title: `${data.sign.name} 카드`,
+          meta: '별자리 분위기 카드가 생성되었습니다.',
+          pills: [data.sign.name, `${data.sign.element} 기운`, `${data.numbers.length}개 번호`]
+        });
+        setCardStatus('카드 이미지 생성이 완료되었습니다.');
+        return imageUrl;
+      } catch (error) {
+        const message = (error?.message && error.message.toLowerCase().includes('fetch'))
+          ? '카드 API에 연결할 수 없습니다. Vercel API Base URL이 맞는지 확인해 주세요.'
+          : (error?.message || '카드 이미지 생성에 실패했습니다.');
+        setCardStatus(message);
+        clearCardPreview(message);
+        return null;
+      } finally {
+        generateCardBtn.disabled = false;
       }
     }
 
@@ -678,7 +993,7 @@
     async function requestRecommendation(dateValue) {
       let response;
       try {
-        response = await fetch(APP_CONFIG.drawEndpoint, {
+        response = await fetch(buildApiUrl('/api/draw'), {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ birthDate: dateValue })
@@ -706,7 +1021,7 @@
 
     async function requestRecommendationWithFallback(dateValue) {
       try {
-        const response = await fetch(APP_CONFIG.drawEndpoint, {
+        const response = await fetch(buildApiUrl('/api/draw'), {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ birthDate: dateValue })
@@ -723,7 +1038,7 @@
         }
 
         if (!response.ok) {
-          throw new Error(data.error || '?쒕쾭?먯꽌 異붿쿇 寃곌낵瑜?諛쏆? 紐삵뻽?듬땲??');
+          throw new Error(data.error || '서버에서 추천 결과를 받지 못했습니다.');
         }
 
         return data;
@@ -771,10 +1086,11 @@
         typing.remove();
 
         signValue.textContent = data.sign.name;
-        countValue.textContent = String(data.numbers.length) + " numbers";
+        countValue.textContent = `${data.numbers.length}개`;
         setNumbers(data.numbers);
         setReasons(data.numbers);
         assistantReply.textContent = data.message;
+        lastRecommendationData = data;
         trackEvent('lotto_result_saved', {
           birth_date: data.birthDate || dateValue,
           zodiac_sign: data.sign.name,
@@ -783,6 +1099,7 @@
         });
 
         addMessage('bot', data.message);
+        await generateCardImage(data);
       } catch (error) {
         typing.remove();
         const message = error?.message || '추천 결과를 불러오지 못했어요.';
@@ -811,6 +1128,49 @@
           preset_date: chip.dataset.date
         });
       });
+    });
+
+    const storedApiKey = localStorage.getItem(HIGGSFIELD_KEY_STORAGE) || '';
+    const storedApiSecret = localStorage.getItem(HIGGSFIELD_SECRET_STORAGE) || '';
+    const storedApiBase = localStorage.getItem(API_BASE_STORAGE) || '';
+    if (storedApiBase) {
+      apiBaseInput.value = storedApiBase;
+    }
+    if (storedApiKey) {
+      apiKeyInput.value = storedApiKey;
+    }
+    if (storedApiSecret) {
+      apiSecretInput.value = storedApiSecret;
+    }
+    if (storedApiKey && storedApiSecret) {
+      setCardStatus('저장된 API 키와 Secret 키를 불러왔어요.');
+    } else {
+      setCardStatus('Vercel API Base URL, API Key, Secret Key를 입력하면 별자리 카드 이미지를 만들 수 있어요.');
+    }
+
+    saveApiKeyBtn.addEventListener('click', () => {
+      const apiBase = normalizeBaseUrl(apiBaseInput.value);
+      const apiKey = apiKeyInput.value.trim();
+      const apiSecret = apiSecretInput.value.trim();
+      if (!apiBase || !apiKey || !apiSecret) {
+        setCardStatus('Vercel API Base URL, API Key, Secret Key를 모두 입력해 주세요.');
+        return;
+      }
+
+      localStorage.setItem(API_BASE_STORAGE, apiBase);
+      localStorage.setItem(HIGGSFIELD_KEY_STORAGE, apiKey);
+      localStorage.setItem(HIGGSFIELD_SECRET_STORAGE, apiSecret);
+      setCardStatus('Vercel API Base URL, API Key, Secret Key를 저장했어요.');
+    });
+
+    generateCardBtn.addEventListener('click', async () => {
+      const data = lastRecommendationData;
+      if (!data) {
+        setCardStatus('먼저 번호 추첨을 해 주세요.');
+        return;
+      }
+
+      await generateCardImage(data);
     });
 
     addMessage('bot', '생년월일을 입력하면 별자리에 맞춰 번호와 이유를 알려드릴게요.');
