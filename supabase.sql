@@ -22,3 +22,11 @@ create index if not exists lotto_draws_zodiac_sign_idx
   on public.lotto_draws (zodiac_sign);
 
 alter table public.lotto_draws enable row level security;
+
+drop policy if exists lotto_draws_insert_anon on public.lotto_draws;
+
+create policy lotto_draws_insert_anon
+  on public.lotto_draws
+  for insert
+  to anon
+  with check (true);

@@ -135,10 +135,10 @@ function buildMessage({ sign, numbers }) {
 
 async function saveToSupabase(payload) {
   const supabaseUrl = process.env.SUPABASE_URL;
-  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY;
 
   if (!supabaseUrl || !serviceRoleKey) {
-    throw new Error('SUPABASE_URL 또는 SUPABASE_SERVICE_ROLE_KEY 환경 변수가 없습니다.');
+    throw new Error('SUPABASE_URL 또는 SUPABASE_SERVICE_ROLE_KEY / SUPABASE_ANON_KEY 환경 변수가 없습니다.');
   }
 
   const response = await fetch(`${supabaseUrl.replace(/\/$/, '')}/rest/v1/lotto_draws`, {

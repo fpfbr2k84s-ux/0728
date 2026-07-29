@@ -4,6 +4,14 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>별자리 로또 챗봇</title>
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-4B4SKH2GCG"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-4B4SKH2GCG');
+  </script>
   <style>
     :root {
       color-scheme: light;
@@ -438,7 +446,15 @@
   </div>
 
   <script>
-    const DRAW_ENDPOINT = '/api/draw';
+    // Configure these if you open the file directly or deploy the page somewhere else.
+    // window.__DRAW_ENDPOINT__ = 'https://YOUR_DEPLOYMENT.vercel.app/api/draw';
+    // window.__SUPABASE_URL__ = 'https://YOUR_PROJECT.supabase.co';
+    // window.__SUPABASE_ANON_KEY__ = 'YOUR_SUPABASE_ANON_KEY';
+    const APP_CONFIG = {
+      drawEndpoint: window.__DRAW_ENDPOINT__ || '/api/draw',
+      supabaseUrl: window.__SUPABASE_URL__ || '',
+      supabaseAnonKey: window.__SUPABASE_ANON_KEY__ || ''
+    };
 
     const chatLog = document.getElementById('chatLog');
     const birthDate = document.getElementById('birthDate');
@@ -624,10 +640,39 @@
       };
     }
 
+    async function saveToSupabase(payload) {
+      if (!APP_CONFIG.supabaseUrl || !APP_CONFIG.supabaseAnonKey) {
+        return false;
+      }
+
+      const response = await fetch(`${APP_CONFIG.supabaseUrl.replace(/\/$/, '')}/rest/v1/lotto_draws`, {
+        method: 'POST',
+        headers: {
+          apikey: APP_CONFIG.supabaseAnonKey,
+          Authorization: `Bearer ${APP_CONFIG.supabaseAnonKey}`,
+          'Content-Type': 'application/json',
+          Prefer: 'return=minimal'
+        },
+        body: JSON.stringify({
+          birth_date: payload.birthDate,
+          zodiac_sign: payload.sign.name,
+          lucky_numbers: payload.numbers.map((item) => item.value),
+          explanation: payload.message
+        })
+      });
+
+      if (!response.ok) {
+        const text = await response.text();
+        throw new Error(`Supabase 저장 실패: ${response.status} ${text}`);
+      }
+
+      return true;
+    }
+
     async function requestRecommendation(dateValue) {
       let response;
       try {
-        response = await fetch(DRAW_ENDPOINT, {
+        response = await fetch(APP_CONFIG.drawEndpoint, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ birthDate: dateValue })
@@ -653,6 +698,53 @@
       return data;
     }
 
+    async function requestRecommendationWithFallback(dateValue) {
+      try {
+        const response = await fetch(APP_CONFIG.drawEndpoint, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ birthDate: dateValue })
+        });
+
+        const raw = await response.text();
+        let data = {};
+        if (raw) {
+          try {
+            data = JSON.parse(raw);
+          } catch {
+            data = { error: raw };
+          }
+        }
+
+        if (!response.ok) {
+          throw new Error(data.error || '?쒕쾭?먯꽌 異붿쿇 寃곌낵瑜?諛쏆? 紐삵뻽?듬땲??');
+        }
+
+        return data;
+      } catch (error) {
+        const parsedDate = parseBirthDate(dateValue);
+        if (!parsedDate) {
+          throw error;
+        }
+
+        const localData = buildLocalRecommendation(parsedDate);
+        const payload = {
+          birthDate: dateValue,
+          sign: localData.sign,
+          numbers: localData.numbers,
+          message: localData.message
+        };
+
+        try {
+          await saveToSupabase(payload);
+        } catch (saveError) {
+          console.warn(saveError);
+        }
+
+        return payload;
+      }
+    }
+
     async function handleSubmit(dateValue) {
       if (!dateValue) {
         addMessage('bot', '먼저 생년월일을 입력해 주세요.');
@@ -665,7 +757,7 @@
       const typing = addMessage('bot', '생각하는 중...');
 
       try {
-        const data = await requestRecommendation(dateValue);
+        const data = await requestRecommendationWithFallback(dateValue);
         typing.remove();
 
         signValue.textContent = data.sign.name;
