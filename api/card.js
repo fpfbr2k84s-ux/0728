@@ -55,15 +55,21 @@ function buildPrompt(body) {
 }
 
 async function proxyToSegmind(payload) {
-  const credential = payload.apiSecret
-    ? `${payload.apiKey}:${payload.apiSecret}`
-    : payload.apiKey;
+  const apiKey =
+    process.env.SEGMIND_API_KEY ||
+    process.env.HIGGSFIELD_API_KEY ||
+    process.env.HIGGSFIELD_KEY ||
+    payload.apiKey ||
+    '';
+
+  if (!apiKey) {
+    throw new Error('Segmind API key is not configured on the server.');
+  }
 
   const response = await fetch('https://api.segmind.com/v1/higgsfield-soul-2', {
     method: 'POST',
     headers: {
-      'x-api-key': credential,
-      Authorization: `Key ${credential}`,
+      'x-api-key': apiKey,
       'Content-Type': 'application/json',
       Accept: '*/*'
     },
@@ -116,19 +122,11 @@ async function handler(req, res) {
 
   try {
     const body = req.body && typeof req.body === 'object' ? req.body : await readBody(req);
-    const apiKey = typeof body?.apiKey === 'string' ? body.apiKey.trim() : '';
-    const apiSecret = typeof body?.apiSecret === 'string' ? body.apiSecret.trim() : '';
-    if (!apiKey) {
-      return sendJson(res, 400, { error: 'API key is required.' });
-    }
-
     const prompt = typeof body?.prompt === 'string' && body.prompt.trim()
       ? body.prompt.trim()
       : buildPrompt(body);
 
     const result = await proxyToSegmind({
-      apiKey,
-      apiSecret,
       prompt,
       birthDate: body?.birthDate
     });
